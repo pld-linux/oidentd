@@ -1,5 +1,5 @@
 # options to use when starting oidentd as daemon:
-# -m	lookup masquaraded connections in /etc/oidentd.users
+# -m	lookup masquaraded connections in /etc/oidentd_masq.conf
 # -q	don't log connections to oidentd
 # see oidentd(8) for detailed list
 OIDENT_OPTIONS="-m"
