@@ -2,7 +2,7 @@ Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Name:		oidentd
 Version:	2.0.0
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -12,6 +12,7 @@ Source1:	%{name}.init
 Source2:	%{name}.users
 Source3:	%{name}.sysconfig
 Source4:	%{name}.conf
+Patch0:		%{name}-masq.conf.patch
 URL:		http://ojnk.sourceforge.net/
 BuildRequires:	flex
 BuildRequires:	bison
@@ -40,6 +41,7 @@ poprzez IP masqueradeing.
 
 %prep
 %setup  -q
+%patch0 -p1
 
 %build
 %configure
@@ -51,7 +53,7 @@ install -d $RPM_BUILD_ROOT%{_sysconfdir}{/sysconfig,/rc.d/init.d}
 
 %{__make} install DESTDIR=$RPM_BUILD_ROOT
 
-install %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/oidentd
+install %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/oidentd
 install %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/oidentd_masq.conf
 install %{SOURCE3} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/oidentd
 install %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/oidentd.conf
