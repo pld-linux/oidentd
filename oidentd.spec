@@ -1,0 +1,76 @@
+Summary:	Ident server with masquerading support
+Summary(pl):	Serwer autoryzacji u¿ytkowników z obs³ug± maskowanych adresów IP
+Name:		oidentd
+Version:	1.6.4
+Release:	1
+License:	GPL
+Group:		Networking/Daemons
+Group(de):	Netzwerkwesen/Server
+Group(pl):	Sieciowe/Serwery
+Source0:	http://download.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
+Source1:	%{name}.inetd
+Source2:	%{name}.users
+URL:		http://ojnk.sourceforge.net/
+Requires:	rc-inetd
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+
+%description
+Oidentd is an ident (rfc1413) daemon that runs on Linux, FreeBSD,
+OpenBSD and Solaris 2.x. Oidentd supports most features of pidentd
+plus more. Most notably, oidentd allows users to specify the identd
+response that the server will output when a successful lookup is
+completed. Oidentd supports IP masqueraded connections on Linux, and
+is able to forward requests to hosts that masq through the host on
+which oidentd runs.
+
+%description -l pl
+Oident jest serwerem autoryzacji u¿ytkowników identd (zgodnym z
+rfc1413) dzia³aj±cym pod kontrol± systemów operacyjnych takich jak
+Linux, FreeBSD, OpenBSD oraz Solaris 2.x. Oident posiada wiêkszo¶æ
+funkcji programu pidentd oraz trochê dodatkowych. Jedn± z nich jest
+to, ¿e oident pozwala u¿ytkownikom na zmianê swojej nazwy przesy³anej
+przez serwer na dowoln± inn±. Dodatkowo wspiera maskowane adresy IP,
+pozwalaj±c na autoryzacjê u¿ytkowników za ¶cian± ogniow±.
+
+%prep
+%setup  -q
+
+%build
+
+%configure 
+
+%{__make}
+
+%install
+rm -rf $RPM_BUILD_ROOT
+
+install -d $RPM_BUILD_ROOT/etc/sysconfig/rc-inetd
+install %{SOURCE1} $RPM_BUILD_ROOT/etc/sysconfig/rc-inetd
+install %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}
+
+%{__make} install DESTDIR=$RPM_BUILD_ROOT
+
+gzip -9nf $RPM_BUILD_ROOT%{_mandir}/man8/* \
+	  AUTHORS INSTALL NEWS README THANKS ChangeLog
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%post
+if [ -f /var/lock/subsys/rc-inetd ]; then
+        /etc/rc.d/init.d/rc-inetd reload 1>&2
+else
+        echo "Type \"/etc/rc.d/init.d/rc-inetd start\" to start inet sever" 1>&2fi
+
+%postun
+if [ -f /var/lock/subsys/rc-inetd ]; then
+        /etc/rc.d/init.d/rc-inetd reload
+fi
+
+%files
+%defattr(644,root,root,755)
+%attr(640,root,root) %config(noreplace) %verify(not mtime md5 size) /etc/sysconfig/rc-inetd/oidentd
+%config(noreplace) %verify(not mtime md5 size) %{_sysconfdir}/oidentd.users
+%attr(755,root,root) %{_sbindir}/oidentd
+%{_mandir}/man8/oidentd.8.gz
+%doc *.gz
