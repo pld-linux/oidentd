@@ -10,7 +10,8 @@ Group(pl):	Sieciowe/Serwery
 Source0:	ftp://download.sourceforge.net/pub/sourceforge/ojnk/%{name}-%{version}.tar.gz
 Source1:	%{name}.inetd
 Source2:	%{name}.users
-Patch:		oidentd-1.7.1-ipv6.patch
+Patch1:		oidentd-1.7.1-ipv6.patch
+Patch2:		%{name}-autoheader_SVR4.patch
 URL:		http://ojnk.sourceforge.net/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -39,7 +40,8 @@ poprzez IP masqueradeing.
 
 %prep
 %setup  -q
-%patch0 -p1
+%patch1 -p1
+%patch2 -p1
 
 %build
 aclocal
