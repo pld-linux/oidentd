@@ -7,4 +7,4 @@ USER=root
 SERVER=tcpd
 DAEMON=/usr/sbin/oidentd
 DAEMONARGS="-i -F"
-
+FAMILY=ipv4
