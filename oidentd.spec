@@ -2,7 +2,7 @@ Summary:	Ident server with masquerading support
 Summary(pl):	Ident serwer z obs³ug± maskowanych adresów IP
 Name:		oidentd
 Version:	1.9.9.1
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -17,6 +17,7 @@ BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	flex
 Provides:	identserver
+Prereq:		/sbin/chkconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	pidentd
 
@@ -66,9 +67,7 @@ gzip -9nf AUTHORS INSTALL NEWS README ChangeLog
 rm -rf $RPM_BUILD_ROOT
 
 %post
-
 /sbin/chkconfig --add %{name}
-
 if [ -f /var/lock/subsys/oidentd ]; then
         /etc/rc.d/init.d/oidentd reload 1>&2
 else
