@@ -14,7 +14,7 @@
  	oidentd_cfg_parse.y \
  	os.c
  
-+oidentd_LDADD = $(top_builddir)/src/missing/missing.a
++oidentd_LDADD = $(top_builddir)/src/missing/libmissing.a
 +
  EXTRA_DIST = \
  	oidentd_scan.c \
