@@ -47,8 +47,8 @@ install -d $RPM_BUILD_ROOT/etc/sysconfig/rc-inetd
 
 %{__make} install DESTDIR=$RPM_BUILD_ROOT
 
-install %{SOURCE1} $RPM_BUILD_ROOT/etc/sysconfig/rc-inetd
-install %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/oidentd
+install %{SOURCE1} $RPM_BUILD_ROOT/etc/sysconfig/rc-inetd/oidentd
+install %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/oidentd.users
 
 gzip -9nf AUTHORS INSTALL NEWS README THANKS ChangeLog \
 	$RPM_BUILD_ROOT%{_mandir}/man8/*
