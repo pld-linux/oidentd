@@ -1,0 +1,1145 @@
+diff -urN oidentd-1.7.1/ChangeLog oidentd/ChangeLog
+--- oidentd-1.7.1/ChangeLog	Sun Oct 22 20:56:26 2000
++++ oidentd/ChangeLog	Sat Dec  9 23:49:23 2000
+@@ -1,6 +1,15 @@
+-Sun Oct 22 14:54:06 EDT 2000	Ryan McCabe	<odin@numb.org>
++Sat Dec 09 17:47:15 EST 2000    Ryan McCabe <odin@numb.org>
+ 
+-	* Released as version 1.7.1
++    * Fixes for IPv6 support from Daniel Brafford.
++
++Thu Dec 07 00:03:58 EST 2000    Ryan McCabe <odin@numb.org>
++
++    * Applied patch from Daniel Brafford <pod@charter.net> for
++      IPv6 support on Linux.
++
++Sun Oct 22 14:54:06 EDT 2000    Ryan McCabe    <odin@numb.org>
++
++    * Released as version 1.7.1
+ 
+ Thu Oct 19 17:02:22 EDT 2000    Ryan McCabe <odin@numb.org>
+ 
+diff -urN oidentd-1.7.1/INSTALL oidentd/INSTALL
+--- oidentd-1.7.1/INSTALL	Sun Oct 22 20:56:26 2000
++++ oidentd/INSTALL	Fri Dec 15 22:51:09 2000
+@@ -1,4 +1,4 @@
+-$Id$
++$Id$
+ 
+ -------------------
+ INSTALLING OIDENTD
+@@ -30,10 +30,12 @@
+       userid/login name lookups fail.
+ 
+ Oidentd does not require superuser privileges and should not be run as
+-root.  On OpenBSD and on FreeBSD, oidentd should be run
++root.  On OpenBSD and on FreeBSD 3.x and below, oidentd should be run
+ with group kmem.  An example inetd line is:
+ 
+ auth  stream  tcp  wait  nobody:kmem  /usr/local/sbin/oidentd oidentd -wi
++
++oidentd requires root privileges to run on FreeBSD 4.x.
+ 
+ ----------------
+ IP-MASQUERADING
+diff -urN oidentd-1.7.1/README oidentd/README
+--- oidentd-1.7.1/README	Sun Oct 22 20:56:26 2000
++++ oidentd/README	Thu Dec  7 06:08:06 2000
+@@ -1,4 +1,4 @@
+-oidentd v1.7.1 by Ryan McCabe <odin@numb.org>
++oidentd v1.7.2 by Ryan McCabe <odin@numb.org>
+ 
+ Oidentd is an ident (rfc1413 compliant) daemon which runs on GNU/Linux,
+ FreeBSD and OpenBSD.  Oidentd supports most features of pidentd as well as
+@@ -38,4 +38,4 @@
+ odin@numb.org
+ 
+ 
+-$Id$
++$Id$
+diff -urN oidentd-1.7.1/TODO oidentd/TODO
+--- oidentd-1.7.1/TODO	Mon Oct 16 17:53:27 2000
++++ oidentd/TODO	Fri Dec 15 22:51:09 2000
+@@ -1,3 +1 @@
+-Merge patch adding support for ipv6 from Pawel Dabrowski <ving@student.uci.agh.edu.pl>
+-
+ Add masq support for FreeBSD.
+diff -urN oidentd-1.7.1/acconfig.h oidentd/acconfig.h
+--- oidentd-1.7.1/acconfig.h	Tue Oct  3 08:13:54 2000
++++ oidentd/acconfig.h	Thu Dec  7 06:08:06 2000
+@@ -11,6 +11,8 @@
+ 
+ #undef NO_MASQ
+ 
++#undef WANT_IPV6
++
+ /*
+ ** Define this if you want random chars of the set [0-9A-Za-z] instead of
+ ** UPREFIXxxxxx
+@@ -44,6 +46,11 @@
+ ** File containing connection information. (Linux)
+ */
+ #define CFILE "/proc/net/tcp"
++
++/*
++** File containing IPv6 connection information. (Linux)
++*/
++#define CFILE6 "/proc/net/tcp6"
+ 
+ /*
+ ** Name of file that contains the spoofed identd reply. The file should be
+
+diff -urN oidentd-1.7.1/configure.in oidentd/configure.in
+--- oidentd-1.7.1/configure.in	Sun Oct 22 20:56:26 2000
++++ oidentd/configure.in	Thu Dec  7 06:08:06 2000
+@@ -2,7 +2,7 @@
+ 
+ MAJOR_VERSION=1
+ MINOR_VERSION=7
+-PATCH_VERSION=1
++PATCH_VERSION=2
+ 
+ PACKAGE=oidentd
+ VERSION=$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION
+@@ -55,6 +55,25 @@
+ AC_ARG_WITH(uprefix, [ --with-uprefix=STRING	String prepended to a random number when the -r flag is specified],
+ 		AC_DEFINE_UNQUOTED(UPREFIX, "$withval"))
+ 
++AC_ARG_ENABLE(ipv6, [ --enable-ipv6         enable IPv6 support],
++		ipv6=yes, ipv6=no)
++
++AC_MSG_CHECKING(whether to enable IPv6 support)
++if test "$ipv6" = "yes"; then
++	AC_MSG_RESULT(yes)
++
++	AC_CHECK_FUNC(getaddrinfo, , ipv6=no)
++	AC_CHECK_FUNC(getnameinfo, , ipv6=no)
++	AC_CHECK_FUNC(inet_ntop, , ipv6=no)
++	if test "$ipv6" = "no"; then
++		AC_MSG_WARN(functions needed for IPv6 support not found)
++	else
++		AC_DEFINE(WANT_IPV6)
++	fi
++else
++	AC_MSG_RESULT(no)
++fi
++
+ AC_CHECK_FUNCS(asprintf dprintf snprintf vsnprintf inet_aton getpagesize)
+ AC_CHECK_LIB(udb, main)
+ 
+@@ -93,3 +112,9 @@
+ 
+ AC_SUBST(LIBS)
+ AC_OUTPUT(Makefile src/Makefile)
++
++echo
++echo "Please remember to use GNU make to build oidentd."
++echo "oidentd will not build with BSD (or any other) make."
++echo "You can get GNU make from any GNU mirror in /pub/gnu/make"
++echo
+diff -urN oidentd-1.7.1/oidentd.8 oidentd/oidentd.8
+--- oidentd-1.7.1/oidentd.8	Sun Oct 22 20:56:26 2000
++++ oidentd/oidentd.8	Thu Dec  7 06:08:06 2000
+@@ -1,5 +1,5 @@
+-.\" $Id$
+-.TH oidentd 8 "22 Aug 2000" "version 1.7.1"
++.\" $Id$
++.TH oidentd 8 "07 Dec 2000" "version 1.7.2"
+ .SH NAME
+ oidentd, in.oidentd \- TCP/IP IDENT protocol server
+ .SH SYNOPSIS
+diff -urN oidentd-1.7.1/src/freebsd.c oidentd/src/freebsd.c
+--- oidentd-1.7.1/src/freebsd.c	Mon Aug 21 08:39:27 2000
++++ oidentd/src/freebsd.c	Thu Dec  7 06:08:06 2000
+@@ -6,7 +6,7 @@
+ **
+ ** Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
+ **
+-** $Id$
++** $Id$
+ */
+ 
+ #include <config.h>
+@@ -170,8 +170,8 @@
+ ** Return the user number for the connection owner
+ */
+ 
+-int get_user(int lport, int fport, const struct in_addr *laddr,
+-			const struct in_addr *faddr) {
++int get_user(int lport, int fport, const struct sockaddr_gen *laddr,
++			const struct sockaddr_gen *faddr) {
+ 	long addr;
+ 	struct socket *sockp;
+ 	struct kinfo_proc *kp;
+@@ -190,7 +190,7 @@
+ #ifdef _HAVE_OLD_INPCB
+ 	tcb.inp_prev = (struct inpcb *) nl[N_TCB].n_value;
+ #endif
+-	sockp = getlist(&tcb, faddr, fport, laddr, lport);
++	sockp = getlist(&tcb, &faddr->sg_addr, fport, &laddr->sg_addr, lport);
+ 
+ 	if (!sockp)
+ 		return (-1);
+diff -urN oidentd-1.7.1/src/freebsd4.c oidentd/src/freebsd4.c
+--- oidentd-1.7.1/src/freebsd4.c	Tue Oct  3 08:46:23 2000
++++ oidentd/src/freebsd4.c	Mon Jan  1 17:02:25 2001
+@@ -1,6 +1,6 @@
+ /*
+ ** freebsd4.c - Ident lookup routines for FreeBSD 4.*
+-** Copyright (C) 2000 Ryan McCabe <odin@numb.org>
++** Copyright (C) 2000-2001 Ryan McCabe <odin@numb.org>
+ **
+ ** This program is free software; you can redistribute it and/or modify
+ ** it under the terms of the GNU General Public License, version 2,
+@@ -15,7 +15,7 @@
+ ** along with this program; if not, write to the Free Software
+ ** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ **
+-** $Id$
++** $Id$
+ */
+ 
+ #define _GNU_SOURCE
+@@ -36,7 +36,7 @@
+ #include <sys/uio.h>
+ #include <sys/utsname.h>
+ 
+-int get_user(int lport, int fport, const struct in_addr *laddr, const struct in_addr *faddr) {
++int get_user(int lport, int fport, const struct sockaddr_gen *laddr, const struct sockaddr_gen *faddr) {
+ 	struct ucred ucred;
+ 	struct sockaddr_in sin[2];
+ 	int len;
+@@ -48,12 +48,12 @@
+ 	sin[0].sin_len = sizeof(struct sockaddr_in);
+ 	sin[0].sin_family = AF_INET;
+ 	sin[0].sin_port = lport;
+-	sin[0].sin_addr.s_addr = laddr->s_addr;
++	sin[0].sin_addr.s_addr = laddr->sg_addr.s_addr;
+ 
+ 	sin[1].sin_len = sizeof(struct sockaddr_in);
+ 	sin[1].sin_family = AF_INET;
+ 	sin[1].sin_port = fport;
+-	sin[1].sin_addr.s_addr = faddr->s_addr;
++	sin[1].sin_addr.s_addr = faddr->sg_addr.s_addr;
+ 
+ 	if (sysctlbyname("net.inet.tcp.getcred", &ucred, &len, sin, sizeof(sin)) == -1) {
+ 		o_log(DPRI, "Error: sysctlbyname: %s", strerror(errno));
+diff -urN oidentd-1.7.1/src/linux.c oidentd/src/linux.c
+--- oidentd-1.7.1/src/linux.c	Tue Aug 22 08:07:48 2000
++++ oidentd/src/linux.c	Mon Jan  1 17:02:25 2001
+@@ -1,6 +1,6 @@
+ /*
+ ** oidentd - ojnk ident daemon
+-** Copyright (C) 1998,1999,2000 Ryan McCabe <odin@numb.org>
++** Copyright (C) 1998-2001 Ryan McCabe <odin@numb.org>
+ **
+ ** This program is free software; you can redistribute it and/or modify
+ ** it under the terms of the GNU General Public License, version 2,
+@@ -15,7 +15,7 @@
+ ** along with this program; if not, write to the Free Software
+ ** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ **
+-** $Id$
++** $Id$
+ */
+ 
+ #define _GNU_SOURCE
+@@ -42,15 +42,63 @@
+ ** Determine the owner of the connection.
+ */
+ 
+-int get_user(int lport, int fport, const struct in_addr *laddr, const struct in_addr *faddr) {
++int get_user(int lport, int fport, const struct sockaddr_gen *laddr, const struct sockaddr_gen *faddr) {
+ 	int uid, portl, portf;
+ 	FILE *fp = NULL;
+ 	u_char buf[1024];
+ 	struct in_addr remote, local;
++	u_long laddr4, faddr4;
++#ifdef WANT_IPV6
++	struct in6_addr remote6, local6;
++#endif
+ 
+ 	lport = ntohs(lport);
+ 	fport = ntohs(fport);
+ 
++	laddr4 = laddr->sg_addr.s_addr;
++	faddr4 = faddr->sg_addr.s_addr;
++
++#ifdef WANT_IPV6
++	if(laddr->sg_family != AF_INET6)
++		goto get_ipv4;
++
++	if(IN6_IS_ADDR_V4MAPPED(laddr->sg_addr6.s6_addr)) {
++		laddr4 = laddr->sg_addr6.s6_addr32[3];
++		faddr4 = faddr->sg_addr6.s6_addr32[3];
++		goto get_ipv4;
++	}
++
++	fp = fopen(CFILE6, "r");
++	if (fp == NULL) {
++		o_log(DPRI, "Error: fopen: %s: %s", CFILE6, strerror(errno));
++		return -1;
++	}
++
++	fgets(buf, sizeof(buf) - 1, fp);
++
++	while (fgets(buf, sizeof(buf) - 1, fp)) {
++		if (sscanf(buf, "%*d: %8x%8x%8x%8x:%x %8x%8x%8x%8x:%x %*x %*X:%*X %*x:%*X %*x %d %*d %*d",
++			&local6.s6_addr32[0], &local6.s6_addr32[1],
++			&local6.s6_addr32[2], &local6.s6_addr32[3], &portl,
++			&remote6.s6_addr32[0], &remote6.s6_addr32[1],
++			&remote6.s6_addr32[2], &remote6.s6_addr32[3], &portf,
++			&uid) == 11) {
++			/* no masq support yet */
++			if (!memcmp(&local6, &laddr->sg_addr6, sizeof(local6)) &&
++			    !memcmp(&remote6, &faddr->sg_addr6, sizeof(remote6)) &&
++			    portl == lport && portf == fport) {
++				fclose(fp);
++				return (uid);
++			}
++		}
++	}
++	fclose(fp);
++
++	return -1;
++#endif
++	goto get_ipv4;
++
++get_ipv4:
+ 	fp = fopen(CFILE, "r");
+ 
+ 	if (fp == NULL) {
+@@ -69,25 +117,25 @@
+ 			(long *) &local, &portl, (long *) &remote, &portf, &uid) == 5) {
+ #ifdef MASQ_SUPPORT
+ 			if (flags & PROXY) {
+-				if (faddr->s_addr == proxy && remote.s_addr != proxy
++				if (faddr4 == proxy && remote.s_addr != proxy
+ 					&& lport == portl && fport == portf) {
+ 					fclose(fp);
+ 					return (uid);
+-				} else if (local.s_addr == laddr->s_addr && portl == lport
+-					&& remote.s_addr == faddr->s_addr && portf == fport) {
++				} else if (local.s_addr == laddr4 && portl == lport
++					&& remote.s_addr == faddr4 && portf == fport) {
+ 						fclose(fp);
+ 
+ 						return (uid);
+ 				}
+-			} else if (local.s_addr == laddr->s_addr && portl == lport
+-				&& remote.s_addr == faddr->s_addr && portf == fport) {
++			} else if (local.s_addr == laddr4 && portl == lport
++				&& remote.s_addr == faddr4 && portf == fport) {
+ 				fclose(fp);
+ 
+ 				return (uid);
+ 			}
+ #else
+-			if (local.s_addr == laddr->s_addr && portl == lport
+-				&& remote.s_addr == faddr->s_addr && portf == fport) {
++			if (local.s_addr == laddr4 && portl == lport
++				&& remote.s_addr == faddr4 && portf == fport) {
+ 					fclose(fp);
+ 
+ 					return (uid);
+diff -urN oidentd-1.7.1/src/oidentd.c oidentd/src/oidentd.c
+--- oidentd-1.7.1/src/oidentd.c	Tue Aug 22 03:43:50 2000
++++ oidentd/src/oidentd.c	Mon Jan  1 17:02:25 2001
+@@ -1,6 +1,6 @@
+ /*
+ ** oidentd - ojnk ident daemon
+-** Copyright (C) 1998,1999,2000 Ryan McCabe <odin@numb.org>
++** Copyright (C) 1998-2001 Ryan McCabe <odin@numb.org>
+ **
+ ** This program is free software; you can redistribute it and/or modify
+ ** it under the terms of the GNU General Public License, version 2,
+@@ -15,7 +15,7 @@
+ ** along with this program; if not, write to the Free Software
+ ** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ **
+-** $Id$
++** $Id$
+ */
+ 
+ #define _GNU_SOURCE
+@@ -57,7 +57,7 @@
+ 
+ static u_int timeout = DEFAULT_TIMEOUT, wtimeout = DEFAULT_WTIMEOUT;
+ static int port;
+-static u_long addr;
++static struct sockaddr_gen addr;
+ static uid_t uid = 65534;
+ static gid_t gid = 65534;
+ 
+@@ -65,9 +65,18 @@
+ 	int opt;
+ 	struct passwd *pw;
+ 	struct group *gr;
++	char *nptr;
++#ifdef MASQ_SUPPORT
++	struct sockaddr_gen paddr;
++#endif
+ 
+ 	port = get_port(DEFAULT_PORT);
+-	addr = htonl(INADDR_ANY);
++
++#ifdef WANT_IPV6
++	memcpy(&addr.sg_addr6, &in6addr_any, sizeof(struct in6_addr));
++#else
++	addr.sg_addr.s_addr = htonl(INADDR_ANY);
++#endif
+ 
+ 	pw = getpwnam("nobody");
+ 	if (pw != NULL)
+@@ -116,24 +125,26 @@
+ 				break;
+ 			case 'P':
+ 				flags |= PROXY;
+-				if (get_addr(optarg, &proxy) == -1) {
++				if (get_addr(optarg, &paddr) == -1) {
+ 					fprintf(stderr, "Fatal: Unknown host: %s\n", optarg);
+ 					exit(-1);
+ 				}
++				proxy = paddr.sg_addr.s_addr;
+ 				break;
+ #endif
+ 			case 'g':
+ 				flags |= GID;
+-				if (valid_number(optarg))
+-					gid = (gid_t) atol(optarg);
+-				else {
+-					gr = getgrnam(optarg);
+-					if (gr == NULL) {
++
++				gr = getgrnam(optarg);
++				if (gr == NULL) {
++					gid = (gid_t) strtol(optarg, &nptr, 10);
++					if (*nptr != '\0') {
+ 						fprintf(stderr, "Fatal: Unknown group: %s\n", optarg);
+ 						exit(-1);
+ 					}
++				} else
+ 					gid = gr->gr_gid;
+-				}
++
+ 				break;
+ 			case 'i':
+ 				flags |= INETD;
+@@ -166,31 +177,32 @@
+ 				flags |= (SPOOF | REVSPOOF);
+ 				break;
+ 			case 't':
+-				if (!valid_number(optarg)) {
++				timeout = strtoul(optarg, &nptr, 10);
++				if (*nptr != '\0') {
+ 					fprintf(stderr, "Fatal: Bad timeout value: %s\n", optarg);
+ 					exit(-1);
+ 				}
+-				timeout = strtoul(optarg, NULL, 10);
+ 				break;
+ 			case 'T':
+-				if (!valid_number(optarg)) {
++				wtimeout = strtoul(optarg, &nptr, 10);
++				if (*nptr != '\0') {
+ 					fprintf(stderr, "Fatal: Bad wtimeout value: %s\n", optarg);
+ 					exit(-1);
+ 				}
+-				wtimeout = strtoul(optarg, NULL, 10);
+ 				break;
+ 			case 'u':
+ 				flags |= UID;
+-				if (valid_number(optarg))
+-					uid = (uid_t) atol(optarg);
+-				else {
+-					pw = getpwnam(optarg);
+-					if (pw == NULL) {
++
++				pw = getpwnam(optarg);
++				if (pw == NULL) {
++					uid = (uid_t) strtol(optarg, &nptr, 10);
++					if (*nptr != '\0') {
+ 						fprintf(stderr, "Fatal: Unknown user: %s\n", optarg);
+ 						exit(-1);
+ 					}
++				} else
+ 					uid = pw->pw_uid;
+-				}
++
+ 				break;
+ #ifdef HAVE_LIBUDB
+ 			case 'U':
+@@ -247,7 +259,7 @@
+ 	struct sockaddr cliaddr;
+ 
+ 	if (!(flags & INETD)) {
+-		listenfd = setup_listen(port, addr);
++		listenfd = setup_listen(port, &addr);
+ 
+ 		if (listenfd == -1) {
+ 			fprintf(stderr, "Fatal: Unable to setup listening socket.\n");
+@@ -297,8 +309,10 @@
+ 		for (;;) {
+ 			connectfd = accept(listenfd, &cliaddr, &len);
+ 
+-			if (connectfd == -1)
+-				continue;
++			if (connectfd == -1) {
++				if(connectfd == -1)
++					continue;
++			}
+ 
+ 			if (!fork()) {
+ 				close(listenfd);
+@@ -377,34 +391,49 @@
+ */
+ 
+ static int service_request(int sock) {
+-	int lport = 0, fport = 0, con_uid, len = sizeof(struct sockaddr_in);
++	int lport = 0, fport = 0, con_uid, len = sizeof(struct sockaddr_gen);
+ 	uid_t orig_uid;
+ 	u_char line[128], suser[MAX_ULEN], orig_suser[MAX_ULEN];
+-	struct sockaddr_in sr_sin;
+-	struct in_addr laddr, faddr;
++	struct sockaddr_gen sr_sin;
++	struct sockaddr_gen laddr, faddr;
+ 	struct passwd *pw;
++	int conisipv4 = 1;
+ 
+-	if (getpeername(sock, (struct sockaddr *) &sr_sin, &len) == -1) {
++	if (getpeername(sock, (struct sockaddr *)&sr_sin, &len) == -1) {
+ 		o_log(DPRI, "Error: getpeername: %s", strerror(errno));
+ 		return (-1);
+ 	}
+ 
+-	faddr = sr_sin.sin_addr;
++	memcpy(&faddr, &sr_sin, sizeof(faddr));
++
++	if (getsockname(sock, (struct sockaddr *)&sr_sin, &len) == -1) {
++		o_log(DPRI, "Error: getsockname: %s", strerror(errno));
++		return (-1);
++	}
++
++	memcpy(&laddr, &sr_sin, sizeof(laddr));
++
++#ifdef WANT_IPV6
++	if(laddr.sg_family == AF_INET6) {
++		if(!IN6_IS_ADDR_V4MAPPED(laddr.sg_addr6.s6_addr))
++			conisipv4 = 0;
++		else {
++			laddr.sg_addr.s_addr = laddr.sg_addr6.s6_addr32[3];
++			faddr.sg_addr.s_addr = faddr.sg_addr6.s6_addr32[3];
++			laddr.sg_family = AF_INET;
++			faddr.sg_family = AF_INET;
++		}
++	}
++#endif
+ 
+ 	if (!(flags & WRAPPED)) {
+ 		u_char host_buf[256];
+ 
+ 		o_log(PRIORITY, "Connection from %s:%d",
+-			hostlookup(sr_sin.sin_addr.s_addr, host_buf, sizeof(host_buf)),
+-			htons(sr_sin.sin_port));
+-	}
+-
+-	if (getsockname(sock, (struct sockaddr *) &sr_sin, &len) == -1) {
+-		o_log(DPRI, "Error: getsockname: %s", strerror(errno));
+-		return (-1);
++			hostlookup(&faddr, host_buf, sizeof(host_buf)),
++			htons(faddr.sg_port));
+ 	}
+ 
+-	laddr = sr_sin.sin_addr;
+ 	len = sockread(sock, line, sizeof(line));
+ 
+ 	if (len <= 0)
+@@ -417,7 +446,7 @@
+ 				lport, fport, ERROR("INVALID-PORT"));
+ 
+ 		o_log(PRIORITY, "[%s] %d , %d : ERROR : INVALID-PORT",
+-			inet_ntoa(faddr), lport, fport);
++			lookup_ip(&faddr), lport, fport);
+ 
+ 		return (0);
+ 	}
+@@ -438,11 +467,11 @@
+ 
+ 	if (con_uid == -1) {
+ #ifdef MASQ_SUPPORT
+-		if (flags & MASQ)
++		if ((flags & MASQ) && conisipv4)
+ #ifdef __linux__
+-			if (!masq(sock, lport, fport, &faddr))
++			if (!masq(sock, lport, fport, &faddr.sg_addr))
+ #else
+-			if (!masq(sock, htons(lport), &laddr, htons(fport), &faddr))
++			if (!masq(sock, htons(lport), &laddr.sg_addr, htons(fport), &faddr.sg_addr))
+ #endif
+ 				return (0);
+ #endif
+@@ -452,13 +481,13 @@
+ 					(charset != NULL ? charset : (u_char *) ""), failuser);
+ 
+ 			o_log(PRIORITY, "[%s] Failed lookup: %d , %d : (returned %s)",
+-				inet_ntoa(faddr), lport, fport, failuser);
++				lookup_ip(&faddr), lport, fport, failuser);
+ 		} else {
+ 			dprintf(sock, "%d , %d : ERROR : %s\r\n",
+ 					lport, fport, ERROR("NO-USER"));
+ 
+ 			o_log(PRIORITY, "[%s] %d , %d : ERROR : NO-USER",
+-				inet_ntoa(faddr), lport, fport);
++				lookup_ip(&faddr), lport, fport);
+ 		}
+ 
+ 		return (0);
+@@ -471,7 +500,7 @@
+ 				lport, fport, ERROR("NO-USER"));
+ 
+ 		o_log(PRIORITY, "[%s] %d , %d : ERROR : getpwuid",
+-			inet_ntoa(faddr), lport, fport);
++			lookup_ip(&faddr), lport, fport);
+ 
+ 		return (0);
+ 	}
+@@ -482,7 +511,7 @@
+ 					lport, fport, ERROR("HIDDEN-USER"));
+ 
+ 			o_log(PRIORITY, "[%s] %d , %d : ERROR : HIDDEN-USER (%s)",
+-				inet_ntoa(faddr), lport, fport, pw->pw_name);
++				lookup_ip(&faddr), lport, fport, pw->pw_name);
+ 
+ 			return (0);
+ 		}
+@@ -561,7 +590,7 @@
+ 		(charset != NULL ? charset : (u_char *) ""), suser);
+ 
+ 	o_log(PRIORITY, "[%s] Successful lookup: %d , %d : %s (%s)",
+-		inet_ntoa(faddr), lport, fport, suser, orig_suser);
++		lookup_ip(&faddr), lport, fport, suser, orig_suser);
+ 
+ 	return (0);
+ }
+diff -urN oidentd-1.7.1/src/oidentd.h oidentd/src/oidentd.h
+--- oidentd-1.7.1/src/oidentd.h	Tue Aug 22 00:22:08 2000
++++ oidentd/src/oidentd.h	Mon Jan  1 17:02:25 2001
+@@ -1,6 +1,6 @@
+ /*
+ ** oidentd - ojnk ident daemon
+-** Copyright (C) 1998,1999,2000 Ryan McCabe <odin@numb.org>
++** Copyright (C) 1998-2001 Ryan McCabe <odin@numb.org>
+ **
+ ** This program is free software; you can redistribute it and/or modify
+ ** it under the terms of the GNU General Public License, version 2,
+@@ -15,7 +15,7 @@
+ ** along with this program; if not, write to the Free Software
+ ** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ **
+-** $Id$
++** $Id$
+ */
+ 
+ /*
+@@ -122,6 +122,22 @@
+ 	int k_open(void);
+ #endif
+ 
+-int get_user(int lport, int fport, const struct in_addr *laddr, const struct in_addr *faddr);
++struct sockaddr_gen {
++	union {
++		struct sockaddr_in sin;
++#ifdef WANT_IPV6
++		struct sockaddr_in6 sin6;
++#endif
++	}sin;
++};
++
++#define sg_family sin.sin.sin_family
++#define sg_port sin.sin.sin_port
++#define sg_addr sin.sin.sin_addr
++#ifdef WANT_IPV6
++#define sg_addr6 sin.sin6.sin6_addr
++#endif
++
++int get_user(int lport, int fport, const struct sockaddr_gen *laddr, const struct sockaddr_gen *faddr);
+ 
+ #endif /* __OIDENTD_H_ */
+diff -urN oidentd-1.7.1/src/oidentd_masq.c oidentd/src/oidentd_masq.c
+--- oidentd-1.7.1/src/oidentd_masq.c	Tue Oct  3 08:13:54 2000
++++ oidentd/src/oidentd_masq.c	Mon Jan  1 17:02:25 2001
+@@ -1,6 +1,6 @@
+ /*
+ ** oidentd - ojnk ident daemon
+-** Copyright (C) 1998,1999,2000 Ryan McCabe <odin@numb.org>
++** Copyright (C) 1998-2001 Ryan McCabe <odin@numb.org>
+ **
+ ** This program is free software; you can redistribute it and/or modify
+ ** it under the terms of the GNU General Public License, version 2,
+@@ -15,7 +15,7 @@
+ ** along with this program; if not, write to the Free Software
+ ** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ **
+-** $Id$
++** $Id$
+ */
+ 
+ #include <config.h>
+@@ -48,6 +48,7 @@
+ 	u_long addr = 0, mask = 0, mask2 = 0;
+ 	FILE *fp = NULL;
+ 	u_char buf[1024], *temp;
++	struct sockaddr_gen sgtemp;
+ #ifdef HAVE_LIBUDB
+ 	struct udb_ip_user ibuf;
+ 	struct in_addr hostaddr;
+@@ -107,10 +108,11 @@
+ 		if (temp != NULL) {
+ 			*temp++ = '\0';
+ 			if (strchr(temp, '.') || !isdigit(*temp)) {
+-				if (get_addr(temp, &mask2) == -1) {
++				if (get_addr(temp, &sgtemp) == -1) {
+ 					o_log(DPRI, "%s: Invalid mask: %s/%s", MAP, buf, temp);
+ 					goto newline;
+ 				}
++				mask2 = sgtemp.sg_addr.s_addr;
+ 			} else {
+ 				mask = strtoul(temp, NULL, 10);
+ 				if (mask < 1 || mask > 32) {
+@@ -120,8 +122,9 @@
+ 			}
+ 		}
+ 
+-		if (get_addr(buf, &addr) == -1)
++		if (get_addr(buf, &sgtemp) == -1)
+ 			goto newline;
++		addr = sgtemp.sg_addr.s_addr;
+ 
+ 		if (mask)
+ 			mask2 = htonl(~((1 << (32 - mask)) - 1));
+diff -urN oidentd-1.7.1/src/oidentd_masq.h oidentd/src/oidentd_masq.h
+--- oidentd-1.7.1/src/oidentd_masq.h	Tue Aug 22 03:43:50 2000
++++ oidentd/src/oidentd_masq.h	Mon Jan  1 17:02:25 2001
+@@ -1,6 +1,6 @@
+ /*
+ ** oidentd - ojnk ident daemon
+-** Copyright (C) 1998,1999,2000 Ryan McCabe <odin@numb.org>
++** Copyright (C) 1998-2001 Ryan McCabe <odin@numb.org>
+ **
+ ** This program is free software; you can redistribute it and/or modify
+ ** it under the terms of the GNU General Public License, version 2,
+@@ -15,7 +15,7 @@
+ ** along with this program; if not, write to the Free Software
+ ** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ **
+-** $Id$
++** $Id$
+ */
+ 
+ #ifndef __OIDENTD_MASQ_H
+diff -urN oidentd-1.7.1/src/oidentd_util.c oidentd/src/oidentd_util.c
+--- oidentd-1.7.1/src/oidentd_util.c	Thu Oct 19 23:04:29 2000
++++ oidentd/src/oidentd_util.c	Thu Jan  4 19:33:28 2001
+@@ -1,6 +1,6 @@
+ /*
+ ** oidentd - ojnk ident daemon
+-** Copyright (C) 1998,1999,2000 Ryan McCabe <odin@numb.org>
++** Copyright (C) 1998-2001 Ryan McCabe <odin@numb.org>
+ **
+ ** This program is free software; you can redistribute it and/or modify
+ ** it under the terms of the GNU General Public License, version 2,
+@@ -15,7 +15,7 @@
+ ** along with this program; if not, write to the Free Software
+ ** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ **
+-** $Id$
++** $Id$
+ */
+ 
+ #define _GNU_SOURCE
+@@ -34,18 +34,28 @@
+ ** Setup a listening socket.
+ */
+ 
+-int setup_listen(int listen_port, u_long listen_addr) {
++int setup_listen(int listen_port, struct sockaddr_gen *listen_addr) {
+ 	const int one = 1;
+ 	int listenfd, ret;
+-	struct sockaddr_in sl_sin;
++	struct sockaddr_gen sl_sin;
+ 
+ 	memset(&sl_sin, 0, sizeof(sl_sin));
+ 
+-	sl_sin.sin_family = AF_INET;
+-	sl_sin.sin_port = htons(listen_port);
+-	sl_sin.sin_addr.s_addr = listen_addr;
+-
+-	listenfd = socket(PF_INET, SOCK_STREAM, 0);
++#ifdef WANT_IPV6
++	listenfd = socket(PF_INET6, SOCK_STREAM, 0);
++	sl_sin.sg_family = AF_INET6;
++	memcpy(&sl_sin.sg_addr6, &listen_addr->sg_addr6, sizeof(struct in6_addr));
++	
++	if (listenfd == -1) {
++	    memset(&sl_sin, 0, sizeof(sl_sin));
++#endif
++	    listenfd = socket(PF_INET, SOCK_STREAM, 0);
++	    sl_sin.sg_family = AF_INET;
++	    sl_sin.sg_addr.s_addr = listen_addr->sg_addr.s_addr;
++#ifdef WANT_IPV6
++	}
++#endif
++	sl_sin.sg_port = htons(listen_port);
+ 
+ 	if (listenfd == -1) {
+ 		o_log(DPRI, "Error: socket: %s", strerror(errno));
+@@ -59,8 +69,8 @@
+ 		return (-1);
+ 	}
+ 
+-	ret = bind(listenfd, (struct sockaddr *) &sl_sin, sizeof(struct sockaddr));
+-	
++	ret = bind(listenfd, (struct sockaddr *) &sl_sin, sizeof(struct sockaddr_gen));
++
+ 	if (ret == -1) {
+ 		o_log(DPRI, "Error: bind: %s", strerror(errno));
+ 		return (-1);
+@@ -79,7 +89,6 @@
+ */
+ 
+ int drop_privs(uid_t new_uid, gid_t new_gid) {
+-	int ret;
+ 
+ 	if (flags & GID) {
+ 		if (setgid(new_gid) == -1) {
+@@ -91,9 +100,10 @@
+ 	if (flags & UID) {
+ 		struct passwd *pw = getpwuid(new_uid);
+ 		gid_t my_gid;
++		int ret;
+ 
+ 		if (pw == NULL) {
+-			o_log(DPRI, "Error: getpwuid(%u): %s", new_uid, strerror(errno));
++			o_log(DPRI, "Error: getpwuid(%u): No such user", new_uid);
+ 			return (-1);
+ 		}
+ 
+@@ -380,11 +390,42 @@
+ ** Return an IP address and/or hostname.
+ */
+ 
+-u_char *hostlookup(u_long lookup_addr, u_char *hostname, size_t len) {
++#ifdef WANT_IPV6
++
++u_char *hostlookup(struct sockaddr_gen *l_addr, u_char *hostname, size_t len) {
++	u_char host[256], ip[128];
++	void *addr;
++
++	addr = (l_addr->sg_family == AF_INET) ? (void *)&l_addr->sg_addr :
++						(void *)&l_addr->sg_addr6;
++
++	inet_ntop(l_addr->sg_family, (void *)addr, ip, sizeof(ip));
++
++	getnameinfo((struct sockaddr *)l_addr, sizeof(struct sockaddr_gen), host, sizeof(host), NULL, 0, 0);
++
++	/*
++	** getnameinfo seems to always return 0, whether the ip resolves
++	** or not
++	*/
++	if(strcmp(host, ip) != 0) {
++		if((strlen(host) + INET6_ADDRSTRLEN + 3) < len) {
++			snprintf(hostname, len, "%s (%s)", host, ip);
++			return hostname;
++		}
++	}
++
++	xstrncpy(hostname, ip, len);
++
++	return hostname;
++}
++
++#else
++
++u_char *hostlookup(struct sockaddr_gen *l_addr, u_char *hostname, size_t len) {
+ 	struct hostent *host = NULL;
+ 	struct in_addr in;
+ 
+-	in.s_addr = lookup_addr;
++	in.s_addr = l_addr->sg_addr.s_addr;
+ 
+ 	host = gethostbyaddr((char *) &in, sizeof(struct in_addr), AF_INET);
+ 
+@@ -400,72 +441,95 @@
+ 	return (hostname);
+ }
+ 
++#endif
++
+ /*
+ ** Get the port associated with a tcp service name.
+ */
+ 
+ int get_port(const u_char *name) {
+ 	struct servent *servent;
++	char *nptr;
++	int port;
+ 
+-	if (valid_number(name))
+-		return (atoi(name));
+-
+-	servent = getservbyname(name, "tcp");
+-	if (servent != NULL)
+-		return (ntohs(servent->s_port));
++	port = strtol(name, &nptr, 10);
++	
++	if (*nptr != '\0') {
++		servent = getservbyname(name, "tcp");
++		if (servent != NULL)
++			port = ntohs(servent->s_port);
++		else
++			port = -1;
++	}
+ 
+-	return (-1);
++	return (port);
+ }
+ 
+ /*
+-** Return a 32-bit, network byte ordered ipv4 address.
++** Return a 32-bit, network byte ordered ipv4 or ipv6 address.
+ */
+ 
+-int get_addr(const u_char *const hostname, u_long *g_addr) {
++#ifdef WANT_IPV6
++
++int get_addr(const u_char *const hostname, struct sockaddr_gen *g_addr) {
++	struct addrinfo *res;
++
++	if(getaddrinfo(hostname, NULL, NULL, &res) != 0)
++		return -1;
++
++	if((res->ai_addr->sa_family != AF_INET) &&
++	   (res->ai_addr->sa_family != AF_INET6))
++	   	return -1;
++
++	memcpy(g_addr, res->ai_addr, res->ai_addrlen);
++
++	return 0;
++}
++
++#else
++
++int get_addr(const u_char *const hostname, struct sockaddr_gen *g_addr) {
+ #ifdef HAVE_INET_ATON
+ 	struct in_addr in;
+ 
+ 	if (inet_aton(hostname, &in)) {
+-		*g_addr = in.s_addr;
++		g_addr->sg_addr.s_addr = in.s_addr;
+ 
+ 		return (0);
+ #else
+-	*g_addr = inet_addr(hostname);
+-	if (*g_addr != -1UL) {
++	u_long addr;
+ 
++	addr = inet_addr(hostname);
++	if (addr != -1UL) {
++		g_addr->sg_addr.s_addr = addr;
+ 		return (0);
+ #endif
+ 	} else {
+ 		struct hostent *host = gethostbyname(hostname);
+ 		if (host) {
+-			*g_addr = *((u_long *) host->h_addr);
++			g_addr->sg_addr.s_addr = *((u_long *) host->h_addr);
+ 			return (0);
+ 		}
+ 	}
+ 
+ 	return (-1);
+ }
++#endif
+ 
+ /*
+-** Returns non-zero if p points to a valid decimal number
++** Return string IPv4 or IPv6 address
+ */
+ 
+-int valid_number(const u_char *p) {
+-	/*
+-	** Make sure that the user isn't really trying to specify an octal
+-	** number... the only valid number that starts with zero is zero
+-	** itself
+-	*/
+-	if (*p == '0')
+-		return (p[1] == '\0');
+-	if (*p == '-')
+-		p++;
+-	if (*p == '\0' || *p == '0')
+-		return (0);
+-	for (; *p != '\0' ; p++) {
+-		if (!isdigit(*p))
+-			return (0);
+-	}
++char *lookup_ip(struct sockaddr_gen *addr) {
++	static char buf[128];
++	void *arg;
++
++#ifdef WANT_IPV6
++	arg = (addr->sg_family == AF_INET) ? (void *)&addr->sg_addr : (void *)&addr->sg_addr6;
++#else
++	arg = (void *)&addr->sg_addr;
++#endif
++	inet_ntop(addr->sg_family, arg, buf, sizeof(buf));
+ 
+-	return (1);
++	return buf;
+ }
+diff -urN oidentd-1.7.1/src/oidentd_util.h oidentd/src/oidentd_util.h
+--- oidentd-1.7.1/src/oidentd_util.h	Tue Aug 22 03:43:50 2000
++++ oidentd/src/oidentd_util.h	Mon Jan  1 17:02:25 2001
+@@ -1,6 +1,6 @@
+ /*
+ ** oidentd - ojnk ident daemon
+-** Copyright (C) 1998,1999,2000 Ryan McCabe <odin@numb.org>
++** Copyright (C) 1998-2001 Ryan McCabe <odin@numb.org>
+ **
+ ** This program is free software; you can redistribute it and/or modify
+ ** it under the terms of the GNU General Public License, version 2,
+@@ -15,7 +15,7 @@
+ ** along with this program; if not, write to the Free Software
+ ** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ **
+-** $Id$
++** $Id$
+ */
+ 
+ #ifndef __OIDENTD_UTIL_H
+@@ -27,17 +27,17 @@
+ #include <netinet/in.h>
+ 
+ int o_log(int priority, char *fmt, ...);
+-int setup_listen(int listen_port, u_long listen_addr);
++int setup_listen(int listen_port, struct sockaddr_gen *listen_addr);
+ int drop_privs(uid_t new_uid, gid_t new_gid);
+ int get_udb_user(int lport, int fport, const struct in_addr *laddr, const struct in_addr *faddr, int sock);
+ int read_permline(FILE *f, u_char *rpbuf, int bufl);
+ ssize_t sockread(int fd, u_char *srbuf, size_t len);
+ int go_background(int ignore);
+ void *xmalloc(size_t size);
+-u_char *hostlookup(u_long lookup_addr, u_char *hostname, size_t len);
++u_char *hostlookup(struct sockaddr_gen *l_addr, u_char *hostname, size_t len);
+ int get_port(const u_char *name);
+-int get_addr(const u_char *const hostname, u_long *g_addr);
+-int valid_number(const u_char *p);
++int get_addr(const u_char *const hostname, struct sockaddr_gen *g_addr);
++char *lookup_ip(struct sockaddr_gen *addr);
+ char *xstrncpy(char *dest, const char *src, size_t n);
+ 
+ #ifndef HAVE_DPRINTF
+diff -urN oidentd-1.7.1/src/openbsd.c oidentd/src/openbsd.c
+--- oidentd-1.7.1/src/openbsd.c	Tue Aug 22 08:07:48 2000
++++ oidentd/src/openbsd.c	Thu Dec  7 06:08:06 2000
+@@ -5,7 +5,7 @@
+ ** OpenBSD support by Slawomir Piotrowski <slawek@telsatgp.com.pl>
+ ** Now it includes masquerading support
+ **
+-** $Id$
++** $Id$
+ */
+ 
+ #include <config.h>
+@@ -144,8 +144,8 @@
+ ** taken from Peter Eriksson <pen@lysator.liu.se>
+ */
+ 
+-int get_user(int lport, int fport, const struct in_addr *laddr,
+-			 const struct in_addr *faddr)
++int get_user(int lport, int fport, const struct sockaddr_gen *laddr,
++			 const struct sockaddr_gen *faddr)
+ {
+ 	struct socket *sockp, sock;
+ 	static struct inpcbtable tcbtable;
+@@ -154,7 +154,7 @@
+ 		return (-1);
+ 
+ 	sockp = getlist(&tcbtable, (struct inpcbtable *) nl[N_TCBTABLE].n_value,
+-		faddr, fport, laddr, lport);
++		&faddr->sg_addr, fport, &laddr->sg_addr, lport);
+ 
+ 	if (!sockp)
+ 		return (-1);
+diff -urN oidentd-1.7.1/src/openbsd24.c oidentd/src/openbsd24.c
+--- oidentd-1.7.1/src/openbsd24.c	Sun Dec 12 21:08:57 1999
++++ oidentd/src/openbsd24.c	Thu Dec  7 06:08:06 2000
+@@ -7,7 +7,7 @@
+  * This version elminates the kmem search in favour of a kernel sysctl to
+  * get the user id associated with a connection - Bob Beck <beck@obtuse.com>
+  *
+- * $Id$
++ * $Id$
+  */
+ 
+ 
+@@ -29,7 +29,7 @@
+  * Return the user number for the connection owner
+  */
+ 
+-int get_user(int lport, int fport, const struct in_addr *laddr, const struct in_addr *faddr) {
++int get_user(int lport, int fport, const struct sockaddr_gen *laddr, const struct sockaddr_gen *faddr) {
+ 	extern u_int flags;
+ 	struct tcp_ident_mapping tir;
+ 	struct sockaddr_in *fin, *lin;
+@@ -45,8 +45,8 @@
+ 	fin = (struct sockaddr_in *) &tir.faddr;
+ 	lin = (struct sockaddr_in *) &tir.laddr;
+ 	
+-	memcpy(&fin->sin_addr, faddr, sizeof (struct in_addr));
+-	memcpy(&lin->sin_addr, laddr, sizeof (struct in_addr));
++	memcpy(&fin->sin_addr, &faddr->sg_addr, sizeof (struct in_addr));
++	memcpy(&lin->sin_addr, &laddr->sg_addr, sizeof (struct in_addr));
+ 	fin->sin_port = fport;
+ 	lin->sin_port = lport;
+ 	i = sizeof (tir);
+diff -urN oidentd-1.7.1/src/solaris2.c oidentd/src/solaris2.c
+--- oidentd-1.7.1/src/solaris2.c	Mon Aug 21 10:00:55 2000
++++ oidentd/src/solaris2.c	Thu Dec  7 06:08:06 2000
+@@ -4,7 +4,7 @@
+ **
+ ** Includes code blatantly stolen from pidentd's svr4.c and sunos5.c
+ **
+-** $Id$
++** $Id$
+ */
+ 
+ #include <config.h>
+@@ -65,7 +65,7 @@
+ 
+ static kvm_t *kd;
+ 
+-int get_user(int lport, int fport, const struct in_addr *laddr, const struct in_addr *faddr) {
++int get_user(int lport, int fport, const struct sockaddr_gen *laddr, const struct sockaddr_gen *faddr) {
+ 	queue_t sqr;
+ 	ipc_t ic, *icp;
+ 	unsigned short uslp, usfp;
+@@ -80,7 +80,7 @@
+ 	uslp = lport;
+ 
+ 	offset = usfp ^ uslp;
+-	offset ^= (unsigned)faddr->S_un.S_un_b.s_b4 ^ (offset >> 8);
++	offset ^= (unsigned)faddr->sg_addr.S_un.S_un_b.s_b4 ^ (offset >> 8);
+ 	offset &= 0xff;
+ 
+ 	if (!getbuf(FANOUT_OFFSET(offset), (char*) &icp, sizeof(ipc_t *)))
+@@ -101,9 +101,9 @@
+ 			return (-1);
+ 
+ 		if (usfp == ports[0] && uslp == ports[1] &&
+-	 	 (memcmp(&laddr->s_addr, locaddr, 4) == 0 ||
++	 	 (memcmp(&laddr->sg_addr.s_addr, locaddr, 4) == 0 ||
+ 	 	 memcmp(&zero, locaddr, 4) == 0) &&
+-	 	 memcmp(&faddr->s_addr, raddr, 4) == 0)
++	 	 memcmp(&faddr->sg_addr.s_addr, raddr, 4) == 0)
+ 			break;
+ 
+ 		icp = ic.ipc_hash_next;
