@@ -12,6 +12,8 @@ Source1:	%{name}.inetd
 Source2:	%{name}.users
 Patch:		oidentd-1.7.1-ipv6.patch
 URL:		http://ojnk.sourceforge.net/
+BuildRequires:	autoconf
+BuildRequires:	automake
 Prereq:		rc-inetd
 Provides:	identserver
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -43,6 +45,7 @@ poprzez IP masqueradeing.
 aclocal
 autoheader
 autoconf
+automake -a -c
 %configure \
 	--enable-ipv6 \
 	--enable-newrandom
