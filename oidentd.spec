@@ -1,8 +1,8 @@
 Summary:	Ident server with masquerading support
 Summary(pl):	Ident serwer z obs³ug± maskowanych adresów IP
 Name:		oidentd
-Version:	1.6.4
-Release:	2
+Version:	1.7.0
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
