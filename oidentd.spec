@@ -2,7 +2,7 @@ Summary:	Ident server with masquerading support
 Summary(pl):	Ident serwer z obs³ug± maskowanych adresów IP
 Name:		oidentd
 Version:	1.7.1
-Release:	2
+Release:	3
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -66,7 +66,7 @@ rm -rf $RPM_BUILD_ROOT
 if [ -f /var/lock/subsys/rc-inetd ]; then
         /etc/rc.d/init.d/rc-inetd reload 1>&2
 else
-        echo "Type \"/etc/rc.d/init.d/rc-inetd start\" to start inet sever" 1>&2fi
+        echo "Type \"/etc/rc.d/init.d/rc-inetd start\" to start inet sever" 1>&2
 fi
 
 %postun
