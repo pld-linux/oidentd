@@ -65,7 +65,7 @@ case "$1" in
 #	killproc oidentd -HUP
 #	;;
   *)
-	msg_Usage "$0 {start|stop|restart|reload|status}"
+	msg_Usage "$0 {start|stop|restart|status}"
 	exit 1
 esac
 
