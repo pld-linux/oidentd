@@ -60,10 +60,10 @@ case "$1" in
   status)
 	status oidentd
 	;;
-  reload)
-	msg_reloading oidentd
-	killproc oidentd -HUP
-	;;
+#  reload)
+#	msg_reloading oidentd
+#	killproc oidentd -HUP
+#	;;
   *)
 	msg_Usage "$0 {start|stop|restart|reload|status}"
 	exit 1
