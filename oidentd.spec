@@ -2,7 +2,7 @@ Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Name:		oidentd
 Version:	2.0.7
-Release:	1.1
+Release:	1.2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
@@ -49,7 +49,7 @@ Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Group:		Networking/Daemons
 PreReq:		rc-inetd
-Requires:	%{name}
+PreReq:		%{name}
 Provides:	%{name}-init
 Obsoletes:	%{name}-standalone
 
@@ -63,8 +63,8 @@ Ten pakiet pozwala na wystartowanie oidentd jako servis inetd.
 Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Group:		Networking/Daemons
+PreReq:		%{name}
 Requires(post,preun):	/sbin/chkconfig
-Requires:	%{name}
 Provides:	%{name}-init
 Obsoletes:	%{name}-inetd
 
