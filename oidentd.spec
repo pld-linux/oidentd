@@ -1,8 +1,8 @@
 Summary:	Ident server with masquerading support
-Summary(pl):	Ident serwer z obs³ug± maskowanych adresów IP
+Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Name:		oidentd
-Version:	1.9.9.1
-Release:	2
+Version:	2.0.0
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -11,11 +11,10 @@ Source0:	ftp://download.sourceforge.net/pub/sourceforge/ojnk/%{name}-%{version}.
 Source1:	%{name}.init
 Source2:	%{name}.users
 Source3:	%{name}.sysconfig
-Source4:        %{name}.conf
+Source4:	%{name}.conf
 URL:		http://ojnk.sourceforge.net/
-BuildRequires:	autoconf
-BuildRequires:	automake
 BuildRequires:	flex
+BuildRequires:	byacc
 Provides:	identserver
 Prereq:		/sbin/chkconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -43,16 +42,12 @@ poprzez IP masqueradeing.
 %setup  -q
 
 %build
-aclocal
-autoheader
-autoconf
-automake -a -c
 %configure
 %{__make}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT/etc{/sysconfig,/rc.d/init.d}
+install -d $RPM_BUILD_ROOT%{_sysconfdir}{/sysconfig,/rc.d/init.d}
 
 %{__make} install DESTDIR=$RPM_BUILD_ROOT
 
