@@ -7,12 +7,12 @@ License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
 Group(pl):	Sieciowe/Serwery
-Source0:	http://download.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
+Source0:	ftp://download.sourceforge.net/pub/sourceforge/ojnk/%{name}-%{version}.tar.gz
 Source1:	%{name}.inetd
 Source2:	%{name}.users
 URL:		http://ojnk.sourceforge.net/
 Prereq:		rc-inetd
-Prodides:	identserver
+Provides:	identserver
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	pidentd
 
