@@ -14,7 +14,7 @@ Source3:	%{name}.sysconfig
 Source4:	%{name}.conf
 URL:		http://ojnk.sourceforge.net/
 BuildRequires:	flex
-BuildRequires:	byacc
+BuildRequires:	bison
 Provides:	identserver
 Prereq:		/sbin/chkconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
