@@ -15,8 +15,7 @@ Source5:	%{name}.inetd
 URL:		http://ojnk.sourceforge.net/
 BuildRequires:	bison
 BuildRequires:	flex
-PreReq:		rc-scripts
-Requires:	%{name}-init
+Requires:	%{name}-init = %{version}
 Provides:	identserver
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	linux-identd
@@ -49,8 +48,8 @@ Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Group:		Networking/Daemons
 PreReq:		rc-inetd
-PreReq:		%{name}
-Provides:	%{name}-init
+PreReq:		%{name} = %{version}
+Provides:	%{name}-init = %{version}
 Obsoletes:	%{name}-standalone
 Conflicts:	%{name} <= 2.0.7-1
 
@@ -64,9 +63,10 @@ Ten pakiet pozwala na wystartowanie oidentd jako servis inetd.
 Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Group:		Networking/Daemons
-PreReq:		%{name}
+PreReq:		%{name} = %{version}
+PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
-Provides:	%{name}-init
+Provides:	%{name}-init = %{version}
 Obsoletes:	%{name}-inetd
 Conflicts:	%{name} <= 2.0.7-1
 
