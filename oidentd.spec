@@ -5,16 +5,17 @@ Version:	2.0.5
 Release:	1
 License:	GPL
 Group:		Networking/Daemons
-Source0:	http://prdownloads.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
+Source0:	http://dl.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
 Source1:	%{name}.init
 Source2:	%{name}.users
 Source3:	%{name}.sysconfig
 Source4:	%{name}.conf
 URL:		http://ojnk.sourceforge.net/
-BuildRequires:	flex
 BuildRequires:	bison
+BuildRequires:	flex
+PreReq:		rc-scripts
+Requires(post,preun):	/sbin/chkconfig
 Provides:	identserver
-Prereq:		/sbin/chkconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	linux-identd
 Obsoletes:	linux-identd-inetd
