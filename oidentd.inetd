@@ -7,4 +7,4 @@ USER=nobody
 GROUP=proc
 SERVER=tcpd
 DAEMON=/usr/sbin/oidentd
-DAEMONARGS="-i -F -m"
+DAEMONARGS="-I -m"
