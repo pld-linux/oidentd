@@ -6,6 +6,7 @@ Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
+# Source0-md5:	d60cc57459fb89c19854ff974c383456
 Source1:	%{name}.init
 Source2:	%{name}.users
 Source3:	%{name}.sysconfig
@@ -20,6 +21,8 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	linux-identd
 Obsoletes:	linux-identd-inetd
 Obsoletes:	linux-identd-standalone
+Obsoletes:	midentd
+Obsoletes:	nidentd
 Obsoletes:	pidentd
 
 %description
