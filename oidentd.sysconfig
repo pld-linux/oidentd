@@ -1,0 +1,9 @@
+# options to use when starting oidentd as daemon:
+# -m	lookup masquaraded connections in /etc/oidentd.users
+# -q	don't log connections to oidentd
+# see oidentd(8) for detailed list
+OIDENT_OPTIONS="-m"
+
+# user / group
+OIDENT_USER=nobody
+OIDENT_GROUP=proc
