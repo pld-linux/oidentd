@@ -1,5 +1,5 @@
 Summary:	Ident server with masquerading support
-Summary(pl):	Serwer autoryzacji u¿ytkowników z obs³ug± maskowanych adresów IP
+Summary(pl):	Ident serwer z obs³ug± maskowanych adresów IP
 Name:		oidentd
 Version:	1.6.4
 Release:	1
@@ -11,8 +11,10 @@ Source0:	http://download.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
 Source1:	%{name}.inetd
 Source2:	%{name}.users
 URL:		http://ojnk.sourceforge.net/
-Requires:	rc-inetd
+Prereq:		rc-inetd
+Prodides:	identserver
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+Obsoletes:	pidentd
 
 %description
 Oidentd is an ident (rfc1413) daemon that runs on Linux, FreeBSD,
@@ -24,34 +26,32 @@ is able to forward requests to hosts that masq through the host on
 which oidentd runs.
 
 %description -l pl
-Oident jest serwerem autoryzacji u¿ytkowników identd (zgodnym z
+Oident jest serwerem us³ugi ident (zgodnym z
 rfc1413) dzia³aj±cym pod kontrol± systemów operacyjnych takich jak
 Linux, FreeBSD, OpenBSD oraz Solaris 2.x. Oident posiada wiêkszo¶æ
 funkcji programu pidentd oraz trochê dodatkowych. Jedn± z nich jest
 to, ¿e oident pozwala u¿ytkownikom na zmianê swojej nazwy przesy³anej
-przez serwer na dowoln± inn±. Dodatkowo wspiera maskowane adresy IP,
-pozwalaj±c na autoryzacjê u¿ytkowników za ¶cian± ogniow±.
+przez serwer na dowoln± inn±. Dodatkowo wspiera przesy³anie odwo³añ do
+us³ugi ident poprzez IP masqueradeing.
 
 %prep
 %setup  -q
 
 %build
-
 %configure 
-
 %{__make}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-
 install -d $RPM_BUILD_ROOT/etc/sysconfig/rc-inetd
-install %{SOURCE1} $RPM_BUILD_ROOT/etc/sysconfig/rc-inetd
-install %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}
 
 %{__make} install DESTDIR=$RPM_BUILD_ROOT
 
-gzip -9nf $RPM_BUILD_ROOT%{_mandir}/man8/* \
-	  AUTHORS INSTALL NEWS README THANKS ChangeLog
+install %{SOURCE1} $RPM_BUILD_ROOT/etc/sysconfig/rc-inetd
+install %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}
+
+gzip -9nf AUTHORS INSTALL NEWS README THANKS ChangeLog \
+	$RPM_BUILD_ROOT%{_mandir}/man8/*
 
 %clean
 rm -rf $RPM_BUILD_ROOT
