@@ -13,6 +13,8 @@ Source3:	%{name}.sysconfig
 Source4:	%{name}.conf
 Source5:	%{name}.inetd
 URL:		http://ojnk.sourceforge.net/
+BuildRequires:	autoconf
+BuildRequires:	automake
 BuildRequires:	bison
 BuildRequires:	flex
 Requires:	%{name}-init = %{version}
@@ -80,6 +82,9 @@ Ten pakiet pozwala na wystartowanie oidentd jako samodzielnego demona.
 %setup -q
 
 %build
+%{__aclocal}
+%{__autoconf}
+%{__automake}
 %configure
 %{__make}
 
