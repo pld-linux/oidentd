@@ -2,7 +2,7 @@ Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Name:		oidentd
 Version:	2.0.4
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://prdownloads.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
@@ -16,6 +16,9 @@ BuildRequires:	bison
 Provides:	identserver
 Prereq:		/sbin/chkconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+Obsoletes:	linux-identd
+Obsoletes:	linux-identd-inetd
+Obsoletes:	linux-identd-standalone
 Obsoletes:	pidentd
 
 %description
@@ -45,13 +48,13 @@ poprzez IP masqueradeing.
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_sysconfdir}{/sysconfig,/rc.d/init.d}
+install -d $RPM_BUILD_ROOT{%{_sysconfdir},/etc/{sysconfig,rc.d/init.d}}
 
 %{__make} install DESTDIR=$RPM_BUILD_ROOT
 
-install %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/oidentd
+install %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/oidentd
+install %{SOURCE3} $RPM_BUILD_ROOT/etc/sysconfig/oidentd
 install %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/oidentd_masq.conf
-install %{SOURCE3} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/oidentd
 install %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/oidentd.conf
 
 %clean
@@ -76,10 +79,10 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc AUTHORS NEWS README ChangeLog
-%attr(640,root,root) %config(noreplace) %verify(not mtime md5 size) /etc/sysconfig/oidentd
 %config(noreplace) %verify(not mtime md5 size) %{_sysconfdir}/oidentd_masq.conf
 %config(noreplace) %verify(not mtime md5 size) %{_sysconfdir}/oidentd.conf
 %attr(755,root,root) %{_sbindir}/oidentd
 %attr(754,root,root) /etc/rc.d/init.d/oidentd
+%attr(640,root,root) %config(noreplace) %verify(not mtime md5 size) /etc/sysconfig/oidentd
 %{_mandir}/man8/*
 %{_mandir}/man5/*
