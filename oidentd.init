@@ -16,7 +16,7 @@
 . /etc/sysconfig/network
 
 # Source oident configureation.
-if [ -f /etc/sysconfig/oidentd ] ; then
+if [ -f /etc/sysconfig/oidentd ]; then
 	. /etc/sysconfig/oidentd
 else
 	OIDENT_USER=nobody
