@@ -52,6 +52,7 @@ PreReq:		rc-inetd
 PreReq:		%{name}
 Provides:	%{name}-init
 Obsoletes:	%{name}-standalone
+Conflicts:	%{name} <= 2.0.7-1
 
 %description inetd
 This package allows to start oidentd as inetd service.
@@ -67,6 +68,7 @@ PreReq:		%{name}
 Requires(post,preun):	/sbin/chkconfig
 Provides:	%{name}-init
 Obsoletes:	%{name}-inetd
+Conflicts:	%{name} <= 2.0.7-1
 
 %description standalone
 This package allows to start oidentd as standalone daemon.
