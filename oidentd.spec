@@ -66,7 +66,7 @@ rm -rf $RPM_BUILD_ROOT
 %post
 /sbin/chkconfig --add %{name}
 if [ -f /var/lock/subsys/oidentd ]; then
-        /etc/rc.d/init.d/oidentd reload 1>&2
+        /etc/rc.d/init.d/oidentd restart 1>&2
 else
         echo "Type \"/etc/rc.d/init.d/oidentd start\" to start inet server" 1>&2
 fi
