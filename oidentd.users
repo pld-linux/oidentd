@@ -11,7 +11,3 @@
 #somehost                       user5       UNIX
 #10.0.0.0/8                     user6       UNIX
 #192.168.1.0/255.255.255.0      user7       UNIX
-#
-# WARNING!!! Current version of oidentd has a bug. If you want to use -m
-# option edit this file and remove all lines beginning with `#'. I hope
-# that bug will be fixed soon.
