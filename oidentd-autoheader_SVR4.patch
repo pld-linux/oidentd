@@ -1,0 +1,17 @@
+diff -u oidentd-1.7.1.orig/acconfig.h oidentd-1.7.1/acconfig.h
+--- oidentd-1.7.1.orig/acconfig.h	Sun Aug 12 14:49:27 2001
++++ oidentd-1.7.1/acconfig.h	Sun Aug 12 14:54:14 2001
+@@ -14,6 +14,12 @@
+ #undef WANT_IPV6
+ 
+ /*
++** No idea what it is for, but autoheader will fail without this. If you
++** know the reason or the right solution --- let me know (mkochano@pld.org.pl).
++*/
++#undef SVR4
++
++/*
+ ** Define this if you want random chars of the set [0-9A-Za-z] instead of
+ ** UPREFIXxxxxx
+ */
+Common subdirectories: oidentd-1.7.1.orig/src and oidentd-1.7.1/src
