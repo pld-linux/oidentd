@@ -2,7 +2,7 @@ Summary:	Ident server with masquerading support
 Summary(pl):	Ident serwer z obs³ug± maskowanych adresów IP
 Name:		oidentd
 Version:	1.9.9
-Release:	5
+Release:	6
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -12,6 +12,7 @@ Source1:	%{name}.init
 Source2:	%{name}.users
 Source3:	%{name}.sysconfig
 Source4:        %{name}.conf
+Patch0:		%{name}-am15.patch
 URL:		http://ojnk.sourceforge.net/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -40,6 +41,7 @@ poprzez IP masqueradeing.
 
 %prep
 %setup  -q
+%patch0 -p1
 
 %build
 aclocal
