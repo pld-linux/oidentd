@@ -131,7 +131,6 @@ fi
 %config(noreplace) %verify(not mtime md5 size) %{_sysconfdir}/oidentd_masq.conf
 %config(noreplace) %verify(not mtime md5 size) %{_sysconfdir}/oidentd.conf
 %attr(755,root,root) %{_sbindir}/oidentd
-%attr(640,root,root) %config(noreplace) %verify(not mtime md5 size) /etc/sysconfig/oidentd
 %{_mandir}/man8/*
 %{_mandir}/man5/*
 
@@ -142,3 +141,4 @@ fi
 %files standalone
 %defattr(644,root,root,755)
 %attr(754,root,root) /etc/rc.d/init.d/oidentd
+%attr(640,root,root) %config(noreplace) %verify(not mtime md5 size) /etc/sysconfig/oidentd
