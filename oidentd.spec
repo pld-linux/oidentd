@@ -59,6 +59,7 @@ install %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/oidentd
 install %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/oidentd.users
 install %{SOURCE3} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/oidentd
 install %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/oidentd.conf
+
 gzip -9nf AUTHORS INSTALL NEWS README ChangeLog
 
 %clean
@@ -76,12 +77,11 @@ fi
 
 %preun
 if [ "$1" = "0" ]; then
-   if [ -f /var/lock/subsys/oidentd ]; then
-           /etc/rc.d/init.d/oidentd stop >&2
-   fi
-   /sbin/chkconfig --del %{name}
+	if [ -f /var/lock/subsys/oidentd ]; then
+		/etc/rc.d/init.d/oidentd stop >&2
+	fi
+	/sbin/chkconfig --del %{name}
 fi
-
 
 %files
 %defattr(644,root,root,755)
