@@ -3,10 +3,10 @@
 # oidentd		This shell script takes care of starting and stopping oidentd.
 #
 # chkconfig:	2345 80 30
-# description:	oidentd is a TCP/IP IDENT protocol server 
-#		
+# description:	oidentd is a TCP/IP IDENT protocol server
+#
 # processname:	oidentd
-# config:	
+# config:
 # pidfile:
 
 # Source function library.
@@ -55,7 +55,7 @@ case "$1" in
 		rm -f /var/lock/subsys/oidentd >/dev/null 2>&1
 	else
 		msg_not_running oidentd
-	fi	
+	fi
 	;;
   restart|force-reload)
 	$0 stop
