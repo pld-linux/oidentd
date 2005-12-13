@@ -49,8 +49,8 @@ poprzez IP masqueradeing.
 Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Group:		Networking/Daemons
-PreReq:		rc-inetd
-PreReq:		%{name} = %{version}
+Requires:	%{name} = %{version}
+Requires:	rc-inetd
 Provides:	%{name}-init = %{version}
 Obsoletes:	%{name}-standalone
 Conflicts:	%{name} <= 2.0.7-1
@@ -65,9 +65,9 @@ Ten pakiet pozwala na wystartowanie oidentd jako servis inetd.
 Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Group:		Networking/Daemons
-PreReq:		%{name} = %{version}
-PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
+Requires:	%{name} = %{version}
+Requires:	rc-scripts
 Provides:	%{name}-init = %{version}
 Obsoletes:	%{name}-inetd
 Conflicts:	%{name} <= 2.0.7-1
@@ -135,17 +135,17 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc AUTHORS NEWS README ChangeLog
-%config(noreplace) %verify(not mtime md5 size) %{_sysconfdir}/oidentd_masq.conf
-%config(noreplace) %verify(not mtime md5 size) %{_sysconfdir}/oidentd.conf
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/oidentd_masq.conf
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/oidentd.conf
 %attr(755,root,root) %{_sbindir}/oidentd
 %{_mandir}/man8/*
 %{_mandir}/man5/*
 
 %files inetd
 %defattr(644,root,root,755)
-%attr(640,root,root) %config(noreplace) %verify(not mtime md5 size) /etc/sysconfig/rc-inetd/oidentd
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/rc-inetd/oidentd
 
 %files standalone
 %defattr(644,root,root,755)
 %attr(754,root,root) /etc/rc.d/init.d/oidentd
-%attr(640,root,root) %config(noreplace) %verify(not mtime md5 size) /etc/sysconfig/oidentd
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/oidentd
