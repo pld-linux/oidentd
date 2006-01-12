@@ -17,7 +17,7 @@ BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	bison
 BuildRequires:	flex
-Requires:	%{name}-init = %{version}
+Requires:	%{name}-init = %{version}-%{release}
 Provides:	identserver
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	linux-identd
@@ -49,9 +49,9 @@ poprzez IP masqueradeing.
 Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Group:		Networking/Daemons
-Requires:	%{name} = %{version}
+Requires:	%{name} = %{version}-%{release}
 Requires:	rc-inetd
-Provides:	%{name}-init = %{version}
+Provides:	%{name}-init = %{version}-%{release}
 Obsoletes:	%{name}-standalone
 Conflicts:	%{name} <= 2.0.7-1
 
@@ -66,9 +66,9 @@ Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Group:		Networking/Daemons
 Requires(post,preun):	/sbin/chkconfig
-Requires:	%{name} = %{version}
+Requires:	%{name} = %{version}-%{release}
 Requires:	rc-scripts
-Provides:	%{name}-init = %{version}
+Provides:	%{name}-init = %{version}-%{release}
 Obsoletes:	%{name}-inetd
 Conflicts:	%{name} <= 2.0.7-1
 
