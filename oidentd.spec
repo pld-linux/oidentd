@@ -2,7 +2,7 @@ Summary:	Ident server with masquerading support
 Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
 Name:		oidentd
 Version:	2.0.7
-Release:	2
+Release:	3
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
@@ -17,15 +17,16 @@ BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	bison
 BuildRequires:	flex
+BuildRequires:	rpmbuild(macros) >= 1.268
 Requires:	%{name}-init = %{version}-%{release}
 Provides:	identserver
-BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	linux-identd
 Obsoletes:	linux-identd-inetd
 Obsoletes:	linux-identd-standalone
 Obsoletes:	midentd
 Obsoletes:	nidentd
 Obsoletes:	pidentd
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
 Oidentd is an ident (rfc1413) daemon that runs on Linux, FreeBSD,
@@ -52,7 +53,7 @@ Group:		Networking/Daemons
 Requires:	%{name} = %{version}-%{release}
 Requires:	rc-inetd
 Provides:	%{name}-init = %{version}-%{release}
-Obsoletes:	%{name}-standalone
+Obsoletes:	oidentd-standalone
 Conflicts:	%{name} <= 2.0.7-1
 
 %description inetd
@@ -69,7 +70,7 @@ Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name} = %{version}-%{release}
 Requires:	rc-scripts
 Provides:	%{name}-init = %{version}-%{release}
-Obsoletes:	%{name}-inetd
+Obsoletes:	oidentd-inetd
 Conflicts:	%{name} <= 2.0.7-1
 
 %description standalone
@@ -106,30 +107,20 @@ rm -rf $RPM_BUILD_ROOT
 
 %post standalone
 /sbin/chkconfig --add %{name}
-if [ -f /var/lock/subsys/oidentd ]; then
-	/etc/rc.d/init.d/oidentd restart 1>&2
-else
-	echo "Type \"/etc/rc.d/init.d/oidentd start\" to start inet server" 1>&2
-fi
+%service oidentd restart
 
 %preun standalone
 if [ "$1" = "0" ]; then
-	if [ -f /var/lock/subsys/oidentd ]; then
-		/etc/rc.d/init.d/oidentd stop >&2
-	fi
+	%service oidentd stop
 	/sbin/chkconfig --del %{name}
 fi
 
 %post inetd
-if [ -f /var/lock/subsys/rc-inetd ]; then
-	/etc/rc.d/init.d/rc-inetd reload 1>&2
-else
-	echo "Type \"/etc/rc.d/init.d/rc-inetd start\" to start inet server" 1>&2
-fi
+%service -q rc-inetd reload
 
 %postun inetd
-if [ -f /var/lock/subsys/rc-inetd ]; then
-	/etc/rc.d/init.d/rc-inetd reload
+if [ "$1" = 0 ]; then
+	%service -q rc-inetd reload
 fi
 
 %files
