@@ -1,0 +1,15 @@
+--- oidentd-2.0.7/src/kernel/linux.c.orig	2003-02-12 05:06:17.000000000 +0100
++++ oidentd-2.0.7/src/kernel/linux.c	2005-01-07 00:50:35.000000000 +0100
+@@ -328,6 +328,12 @@
+				&nl1, &nl2, &nl3, &nl4, &nr1, &nr2, &nr3, &nr4, &nport_temp, &mport_temp);
+
+			if (ret != 21)
++				ret = sscanf(buf,
++					"%15s %*d %*d ESTABLISHED src=%d.%d.%d.%d dst=%d.%d.%d.%d sport=%d dport=%d packets=%*d bytes=%*d src=%d.%d.%d.%d dst=%d.%d.%d.%d sport=%d dport=%d",
++					proto, &l1, &l2, &l3, &l4, &r1, &r2, &r3, &r4, &masq_lport_temp, &masq_fport_temp,
++					&nl1, &nl2, &nl3, &nl4, &nr1, &nr2, &nr3, &nr4, &nport_temp, &mport_temp);
++
++			if (ret != 21)
+				continue;
+
+			masq_lport = (in_port_t) masq_lport_tem
