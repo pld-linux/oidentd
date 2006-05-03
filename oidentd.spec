@@ -12,6 +12,7 @@ Source2:	%{name}.users
 Source3:	%{name}.sysconfig
 Source4:	%{name}.conf
 Source5:	%{name}.inetd
+Patch0:		%{name}-ip_conntrack.diff
 URL:		http://ojnk.sourceforge.net/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -81,6 +82,7 @@ Ten pakiet pozwala na wystartowanie oidentd jako samodzielnego demona.
 
 %prep
 %setup -q
+%patch0 -p1
 
 %build
 %{__aclocal}
