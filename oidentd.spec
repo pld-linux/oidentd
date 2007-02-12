@@ -1,5 +1,5 @@
 Summary:	Ident server with masquerading support
-Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
+Summary(pl.UTF-8):   Serwer ident z obsÅ‚ugÄ… maskowanych adresÃ³w IP
 Name:		oidentd
 Version:	2.0.8
 Release:	1
@@ -38,18 +38,18 @@ completed. Oidentd supports IP masqueraded connections on Linux, and
 is able to forward requests to hosts that masq through the host on
 which oidentd runs.
 
-%description -l pl
-Oident jest serwerem us³ugi ident (zgodnym z rfc1413) dzia³aj±cym pod
-kontrol± systemów operacyjnych takich jak Linux, FreeBSD, OpenBSD oraz
-Solaris 2.x. Oident posiada wiêkszo¶æ funkcji programu pidentd oraz
-trochê dodatkowych. Jedn± z nich jest to, ¿e oident pozwala
-u¿ytkownikom na zmianê swojej nazwy przesy³anej przez serwer na
-dowoln± inn±. Dodatkowo wspiera przesy³anie odwo³añ do us³ugi ident
+%description -l pl.UTF-8
+Oident jest serwerem usÅ‚ugi ident (zgodnym z rfc1413) dziaÅ‚ajÄ…cym pod
+kontrolÄ… systemÃ³w operacyjnych takich jak Linux, FreeBSD, OpenBSD oraz
+Solaris 2.x. Oident posiada wiÄ™kszoÅ›Ä‡ funkcji programu pidentd oraz
+trochÄ™ dodatkowych. JednÄ… z nich jest to, Å¼e oident pozwala
+uÅ¼ytkownikom na zmianÄ™ swojej nazwy przesyÅ‚anej przez serwer na
+dowolnÄ… innÄ…. Dodatkowo wspiera przesyÅ‚anie odwoÅ‚aÅ„ do usÅ‚ugi ident
 poprzez IP masqueradeing.
 
 %package inetd
 Summary:	Ident server with masquerading support
-Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
+Summary(pl.UTF-8):   Serwer ident z obsÅ‚ugÄ… maskowanych adresÃ³w IP
 Group:		Networking/Daemons
 Requires:	%{name} = %{version}-%{release}
 Requires:	rc-inetd
@@ -60,12 +60,12 @@ Conflicts:	%{name} <= 2.0.7-1
 %description inetd
 This package allows to start oidentd as inetd service.
 
-%description inetd -l pl
+%description inetd -l pl.UTF-8
 Ten pakiet pozwala na wystartowanie oidentd jako servis inetd.
 
 %package standalone
 Summary:	Ident server with masquerading support
-Summary(pl):	Serwer ident z obs³ug± maskowanych adresów IP
+Summary(pl.UTF-8):   Serwer ident z obsÅ‚ugÄ… maskowanych adresÃ³w IP
 Group:		Networking/Daemons
 Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name} = %{version}-%{release}
@@ -77,7 +77,7 @@ Conflicts:	%{name} <= 2.0.7-1
 %description standalone
 This package allows to start oidentd as standalone daemon.
 
-%description standalone -l pl
+%description standalone -l pl.UTF-8
 Ten pakiet pozwala na wystartowanie oidentd jako samodzielnego demona.
 
 %prep
