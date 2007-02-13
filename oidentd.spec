@@ -1,5 +1,5 @@
 Summary:	Ident server with masquerading support
-Summary(pl.UTF-8):   Serwer ident z obsługą maskowanych adresów IP
+Summary(pl.UTF-8):	Serwer ident z obsługą maskowanych adresów IP
 Name:		oidentd
 Version:	2.0.8
 Release:	1
@@ -49,7 +49,7 @@ poprzez IP masqueradeing.
 
 %package inetd
 Summary:	Ident server with masquerading support
-Summary(pl.UTF-8):   Serwer ident z obsługą maskowanych adresów IP
+Summary(pl.UTF-8):	Serwer ident z obsługą maskowanych adresów IP
 Group:		Networking/Daemons
 Requires:	%{name} = %{version}-%{release}
 Requires:	rc-inetd
@@ -65,7 +65,7 @@ Ten pakiet pozwala na wystartowanie oidentd jako servis inetd.
 
 %package standalone
 Summary:	Ident server with masquerading support
-Summary(pl.UTF-8):   Serwer ident z obsługą maskowanych adresów IP
+Summary(pl.UTF-8):	Serwer ident z obsługą maskowanych adresów IP
 Group:		Networking/Daemons
 Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name} = %{version}-%{release}
