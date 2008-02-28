@@ -2,7 +2,7 @@ Summary:	Ident server with masquerading support
 Summary(pl.UTF-8):	Serwer ident z obsługą maskowanych adresów IP
 Name:		oidentd
 Version:	2.0.8
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
@@ -106,6 +106,17 @@ install %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/oidentd.conf
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+
+%post
+%banner %{name} -e <<EOF
+###################################################################
+#                                                                 #
+# NOTICE:                                                         #
+# You need to load 'tcp_diag' kernel module for oidentd to use    #
+# netlink interface instead of (very slow) /proc/net/tcp          #
+#                                                                 #
+###################################################################
+EOF
 
 %post standalone
 /sbin/chkconfig --add %{name}
