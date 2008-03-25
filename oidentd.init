@@ -33,10 +33,7 @@ else
 	exit 0
 fi
 
-RETVAL=0
-# See how we were called.
-case "$1" in
-  start)
+start() {
 	# Start daemons.
 	if [ ! -f /var/lock/subsys/oidentd ]; then
 		msg_starting oidentd
@@ -46,8 +43,9 @@ case "$1" in
 	else
 		msg_already_running oidentd
 	fi
-	;;
-  stop)
+}
+
+stop() {
 	# Stop daemons.
 	if [ -f /var/lock/subsys/oidentd ]; then
 		msg_stopping oidentd
@@ -56,20 +54,38 @@ case "$1" in
 	else
 		msg_not_running oidentd
 	fi
+}
+
+condrestart() {
+	if [ -f /var/lock/subsys/oidentd ]; then
+		stop
+		start
+	else
+		msg_not_running oidentd
+		RETVAL=$1
+	fi
+}
+
+RETVAL=0
+# See how we were called.
+case "$1" in
+  start)
+  	start
 	;;
-  restart|force-reload)
-	$0 stop
-	$0 start
-	exit $?
+  stop)
+  	stop
+	;;
+  restart)
+	stop
+	start
+	;;
+  force-reload)
+	condrestart 7
 	;;
   status)
 	status oidentd
 	exit $?
 	;;
-#  reload)
-#	msg_reloading oidentd
-#	killproc oidentd -HUP
-#	;;
   *)
 	msg_usage "$0 {start|stop|restart|force-reload|status}"
 	exit 3
