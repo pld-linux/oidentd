@@ -67,7 +67,7 @@ diff -ur oidentd-2.0.8/src/oidentd_inet_util.c oidentd-2.0.8-many-ip/src/oidentd
 -		bound_fds[0] = ret;
 -		bound_fds[1] = -1;
 -
-+		bound_fds = xrealloc(bound_fds, naddr + 2 * sizeof(int));
++		bound_fds = xrealloc(bound_fds, (naddr + 2) * sizeof(int));
 +		bound_fds[naddr] = ret;
 +		bound_fds[naddr+1] = -1;
 +		naddr++;
