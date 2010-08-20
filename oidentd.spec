@@ -2,7 +2,7 @@ Summary:	Ident server with masquerading support
 Summary(pl.UTF-8):	Serwer ident z obsługą maskowanych adresów IP
 Name:		oidentd
 Version:	2.0.8
-Release:	4
+Release:	5
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
@@ -14,6 +14,8 @@ Source4:	%{name}.conf
 Source5:	%{name}.inetd
 Patch0:		%{name}-ip_conntrack.diff
 Patch1:		%{name}-multiple-ip.patch
+Patch2:		%{name}-bind-to-ipv6-too.patch
+Patch3:		%{name}-linux-2.6.21.patch     
 URL:		http://ojnk.sourceforge.net/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -85,6 +87,8 @@ Ten pakiet pozwala na wystartowanie oidentd jako samodzielnego demona.
 %setup -q
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
+%patch3 -p1
 
 %build
 %{__aclocal}
