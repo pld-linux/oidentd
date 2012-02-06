@@ -6,8 +6,6 @@
 # description:	oidentd is a TCP/IP IDENT protocol server
 #
 # processname:	oidentd
-# config:
-# pidfile:
 
 # Source function library.
 . /etc/rc.d/init.d/functions
