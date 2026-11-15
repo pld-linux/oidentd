@@ -1,27 +1,28 @@
 Summary:	Ident server with masquerading support
 Summary(pl.UTF-8):	Serwer ident z obsługą maskowanych adresów IP
 Name:		oidentd
-Version:	2.0.8
-Release:	5
-License:	GPL
+Version:	3.1.0
+Release:	1
+License:	GPL v2
 Group:		Networking/Daemons
-Source0:	http://dl.sourceforge.net/ojnk/%{name}-%{version}.tar.gz
-# Source0-md5:	c3d9a56255819ef8904b867284386911
+Source0:	https://github.com/janikrabe/oidentd/releases/download/v%{version}/%{name}-%{version}.tar.xz
+# Source0-md5:	88508a22bdf499315c200e308bfefa7e
 Source1:	%{name}.init
 Source2:	%{name}.users
 Source3:	%{name}.sysconfig
 Source4:	%{name}.conf
 Source5:	%{name}.inetd
-Patch0:		%{name}-ip_conntrack.diff
-Patch1:		%{name}-multiple-ip.patch
-Patch2:		%{name}-bind-to-ipv6-too.patch
-Patch3:		%{name}-linux-2.6.21.patch     
-URL:		http://ojnk.sourceforge.net/
+Source6:	%{name}.service
+# https://github.com/janikrabe/oidentd/commit/0f4ccf4e5d5a0f286e353df3631c9f33292167cf
+Patch0:		%{name}-configure-attribute-checks.patch
+URL:		https://oidentd.janikrabe.com/
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	bison
 BuildRequires:	flex
-BuildRequires:	rpmbuild(macros) >= 1.268
+BuildRequires:	libnetfilter_conntrack-devel
+BuildRequires:	rpmbuild(macros) >= 1.647
+BuildRequires:	ruby-asciidoctor
 Requires:	%{name}-init = %{version}-%{release}
 Provides:	identserver
 Obsoletes:	linux-identd
@@ -71,8 +72,10 @@ Summary:	Ident server with masquerading support
 Summary(pl.UTF-8):	Serwer ident z obsługą maskowanych adresów IP
 Group:		Networking/Daemons
 Requires(post,preun):	/sbin/chkconfig
+Requires(post,preun,postun):	systemd-units >= 38
 Requires:	%{name} = %{version}-%{release}
 Requires:	rc-scripts
+Requires:	systemd-units >= 38
 Provides:	%{name}-init = %{version}-%{release}
 Obsoletes:	oidentd-inetd
 Conflicts:	%{name} <= 2.0.7-1
@@ -86,20 +89,23 @@ Ten pakiet pozwala na wystartowanie oidentd jako samodzielnego demona.
 %prep
 %setup -q
 %patch -P0 -p1
-%patch -P1 -p1
-%patch -P2 -p1
-%patch -P3 -p1
+# shipped man pages name /usr/local/etc; make regenerates them with sysconfdir
+%{__rm} doc/oidentd.8 doc/oidentd.conf.5 doc/oidentd_masq.conf.5
 
 %build
 %{__aclocal}
 %{__autoconf}
+%{__autoheader}
 %{__automake}
-%configure
+%configure \
+	--enable-ipv6 \
+	--enable-libnfct \
+	--enable-masq
 %{__make}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT{%{_sysconfdir},/etc/{sysconfig/rc-inetd,rc.d/init.d}}
+install -d $RPM_BUILD_ROOT{%{_sysconfdir},/etc/{sysconfig/rc-inetd,rc.d/init.d},%{systemdunitdir}}
 
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
@@ -109,6 +115,7 @@ install %{SOURCE3} $RPM_BUILD_ROOT/etc/sysconfig/oidentd
 install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/rc-inetd/oidentd
 install %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/oidentd_masq.conf
 install %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/oidentd.conf
+cp -p %{SOURCE6} $RPM_BUILD_ROOT%{systemdunitdir}/oidentd.service
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -127,12 +134,17 @@ EOF
 %post standalone
 /sbin/chkconfig --add %{name}
 %service oidentd restart
+%systemd_post oidentd.service
 
 %preun standalone
 if [ "$1" = "0" ]; then
 	%service oidentd stop
 	/sbin/chkconfig --del %{name}
 fi
+%systemd_preun oidentd.service
+
+%postun standalone
+%systemd_reload
 
 %post inetd
 %service -q rc-inetd reload
@@ -158,4 +170,5 @@ fi
 %files standalone
 %defattr(644,root,root,755)
 %attr(754,root,root) /etc/rc.d/init.d/oidentd
+%{systemdunitdir}/oidentd.service
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/oidentd
