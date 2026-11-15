@@ -1,0 +1,9 @@
+[Unit]
+Description=RFC 1413 compliant per-connection Ident server
+Documentation=man:oidentd(8) man:oidentd.conf(5) man:oidentd_masq.conf(5)
+
+[Service]
+EnvironmentFile=/etc/sysconfig/oidentd
+ExecStart=/usr/sbin/oidentd -I -g $OIDENT_GROUP -u $OIDENT_USER $OIDENT_OPTIONS
+PrivateDevices=true
+StandardInput=socket
